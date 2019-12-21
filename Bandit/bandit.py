@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from math import sqrt, log
 from abc import abstractmethod, ABC
 
 class Bandit(ABC):
@@ -30,28 +31,31 @@ class OptimisticBandit(Bandit):
         self.N = 0
 
 
-def run_game(iterations, epsilon, optimisitic=False, *means):
-    if optimisitic:
-        bandits = [OptimisticBandit(m, 2*m) for m in means]
+def run_game(iterations, epsilon, strategy="Normal", *means):
+    if strategy == "Optimistic" or strategy == "Confidence":
+        bandits = [OptimisticBandit(m, 1.2*m) for m in means]
     else:
         bandits = [NormalBandit(m) for m in means]
 
-    max_bandit = bandits[0]
     average_reward, bandit_means = [], []
     for i in range(iterations):
-        # random() generates a sample from (0, 1) continuous distribution, ie a random probability
-        p = np.random.random()
-        if not optimisitic and p > epsilon:
-            # Exploit, get reward from currently best bandit
-            bandit = max_bandit
+        if strategy == "Confidence":
+            # Add small number to denominator to avoid zero division error
+            bounds = [(b, b.mean + sqrt(2*log(i+1)/(b.N+0.000001))) for b in bandits]
+            bandit = sorted(bounds, key=lambda k: k[1])[-1][0]
+        elif strategy == "Optimistic":
+            bandit = sorted(bandits, key=lambda k: k.mean)[-1]
         else:
-            # Explore, choose a random bandit, without getting a reward
-            bandit = bandits[np.random.randint(0, len(bandits))]
+            # random() generates a sample from (0, 1) continuous distribution, ie a random probability
+            p = np.random.random()
+            if p > epsilon:
+                # Exploit, get reward from currently best bandit
+                bandit = sorted(bandits, key=lambda k: k.mean)[-1]
+            else:
+                # Explore, choose a random bandit, without getting a reward
+                bandit = bandits[np.random.randint(0, len(bandits))]
 
         x = bandit.play()
-        # Update best bandit if its mean exceeds current max
-        if bandit.mean > max_bandit.mean:
-            max_bandit = bandit
 
         # track average reward and bandit means for plotting
         if i > 0:
@@ -80,12 +84,19 @@ def test_results():
     # plt.show()
 
     # Plot average reward
-    for opt in [True, False]:
-        for e in [0.2, 0.1, 0.01, 0.05]:
-            avg_reward, _ = run_game(iterations, e, opt, *means)
-            plt.plot(x_range, avg_reward, label=e)
-        plt.legend()
-        plt.title("Average reward " + str(opt))
-        plt.show()
+    for e in [0.2, 0.1, 0.01, 0.05]:
+        avg_reward, _ = run_game(iterations, e, "Normal", *means)
+        plt.plot(x_range, avg_reward, label=e)
+    plt.legend()
+    plt.title("Average reward for Normal strategy")
+    plt.show()
+
+    for strategy in ["Optimistic", "Confidence"]:
+        avg_reward, _ = run_game(iterations, e, strategy, *means)
+        plt.plot(x_range, avg_reward, label=strategy)
+    plt.legend()
+    plt.title("Average reward for Optimistic and Confidence strategies")
+    plt.show()
+
 
 test_results()
