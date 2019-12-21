@@ -1,12 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from abc import abstractmethod, ABC
 
-
-class Bandit:
-    def __init__(self, true_mean):
-        self.true_mean = true_mean
-        self.mean = 0
-        self.N = 0
+class Bandit(ABC):
+    @abstractmethod
+    def __init__(self, true_mean, init_mean=None):
+        pass
 
     def play(self):
         # randn() returns a gaussian N(0, 1), change mean by adding it to result
@@ -17,19 +16,37 @@ class Bandit:
         return x
 
 
-def run_game(iterations, epsilon, *means):
-    bandits = [Bandit(m) for m in means]
+class NormalBandit(Bandit):
+    def __init__(self, true_mean):
+        self.true_mean = true_mean
+        self.mean = 0
+        self.N = 0
+
+
+class OptimisticBandit(Bandit):
+    def __init__(self, true_mean, init_mean):
+        self.true_mean = true_mean
+        self.mean = init_mean
+        self.N = 0
+
+
+def run_game(iterations, epsilon, optimisitic=False, *means):
+    if optimisitic:
+        bandits = [OptimisticBandit(m, 2*m) for m in means]
+    else:
+        bandits = [NormalBandit(m) for m in means]
+
     max_bandit = bandits[0]
     average_reward, bandit_means = [], []
     for i in range(iterations):
         # random() generates a sample from (0, 1) continuous distribution, ie a random probability
         p = np.random.random()
-        if p < epsilon:
-            # Explore, choose a random bandit, without getting a reward
-            bandit = bandits[np.random.randint(0, len(bandits))]
-        else:
+        if not optimisitic and p > epsilon:
             # Exploit, get reward from currently best bandit
             bandit = max_bandit
+        else:
+            # Explore, choose a random bandit, without getting a reward
+            bandit = bandits[np.random.randint(0, len(bandits))]
 
         x = bandit.play()
         # Update best bandit if its mean exceeds current max
@@ -38,24 +55,37 @@ def run_game(iterations, epsilon, *means):
 
         # track average reward and bandit means for plotting
         if i > 0:
-            average_reward.append((average_reward[-1] + x)/2)
+            new_avg = average_reward[-1]*(len(average_reward))/(len(average_reward)+1) + x/(len(average_reward)+1)
+            average_reward.append(new_avg)
         else:
             average_reward.append(x)
         bandit_means.append([b.mean for b in bandits])
 
-    # Plot bandit means
-    N_b = len(bandits)
+    return average_reward, bandit_means
+
+def test_results():
+    iterations = 1000
+    epsilon = 0.1
+    means = [1, 2, 5]
+    average_reward, bandit_means = run_game(iterations, epsilon, *means)
+
+    # # Plot bandit means
+    # N_b = len(means)
     x_range = range(iterations)
-    bandit_means = list(zip(*bandit_means))
-    for j in range(N_b):
-        plt.subplot(N_b, 1, j+1)
-        plt.plot(x_range, bandit_means[j])
-        plt.title("Bandit {}".format(j+1))
-    plt.show()
+    # bandit_means = list(zip(*bandit_means))
+    # for j in range(N_b):
+    #     plt.subplot(N_b, 1, j+1)
+    #     plt.plot(x_range, bandit_means[j])
+    #     plt.title("Bandit {}".format(j+1))
+    # plt.show()
 
     # Plot average reward
-    plt.plot(x_range, average_reward)
-    plt.title("Average reward")
-    plt.show()
+    for opt in [True, False]:
+        for e in [0.2, 0.1, 0.01, 0.05]:
+            avg_reward, _ = run_game(iterations, e, opt, *means)
+            plt.plot(x_range, avg_reward, label=e)
+        plt.legend()
+        plt.title("Average reward " + str(opt))
+        plt.show()
 
-run_game(300, 0.1, 1, 2, 5)
+test_results()
