@@ -3,9 +3,12 @@ import matplotlib.pyplot as plt
 from math import sqrt, log
 from abc import abstractmethod, ABC
 
+
 class Bandit(ABC):
     @abstractmethod
-    def __init__(self, true_mean, init_mean=None):
+    def __init__(self, true_mean):
+        self.true_mean = true_mean
+        self.N = 0
         pass
 
     def play(self):
@@ -19,27 +22,56 @@ class Bandit(ABC):
 
 class NormalBandit(Bandit):
     def __init__(self, true_mean):
-        self.true_mean = true_mean
+        super().__init__(true_mean)
         self.mean = 0
-        self.N = 0
 
 
 class OptimisticBandit(Bandit):
     def __init__(self, true_mean, init_mean):
-        self.true_mean = true_mean
+        super().__init__(true_mean)
         self.mean = init_mean
-        self.N = 0
+
+
+class BayesianBandit:
+    def __init__(self, true_mean):
+        self.true_mean = true_mean
+        # The bandits mean is itself a random variable now so use sample to get mean
+        # Assume mean normally distributed with (0, 1)
+        self.tau = 1
+        self.m = 0
+        self.lam = 1
+        self.sum_x = 0
+
+    def play(self):
+        # We now sample the likelihood
+        x = np.random.randn()/sqrt(self.tau) + self.true_mean
+        # Calculate new bandit mean after drawing new sample
+        # Note that m0 = 0 and lam0 = 1 and tau = 1
+        # lambda = N , so update lambda by extending N by 1 sample
+        self.lam += 1
+        self.sum_x += x
+        self.m = self.tau*self.sum_x/self.lam
+        return x
+
+    def sample(self):
+        # We now sample posterior
+        return np.random.randn()/sqrt(self.lam) + self.m
 
 
 def run_game(iterations, epsilon, strategy="Normal", *means):
-    if strategy == "Optimistic" or strategy == "Confidence":
+    if strategy == "Bayesian":
+        bandits = [BayesianBandit(m) for m in means]
+    elif strategy == "Optimistic" or strategy == "Confidence":
         bandits = [OptimisticBandit(m, 1.2*m) for m in means]
     else:
         bandits = [NormalBandit(m) for m in means]
 
     average_reward, bandit_means = [], []
     for i in range(iterations):
-        if strategy == "Confidence":
+        if strategy == "Bayesian":
+            sampled_posteriors = [(b, b.sample()) for b in bandits]
+            bandit = sorted(sampled_posteriors, key=lambda k: k[1])[-1][0]
+        elif strategy == "Confidence":
             # Add small number to denominator to avoid zero division error
             bounds = [(b, b.mean + sqrt(2*log(i+1)/(b.N+0.000001))) for b in bandits]
             bandit = sorted(bounds, key=lambda k: k[1])[-1][0]
@@ -63,39 +95,28 @@ def run_game(iterations, epsilon, strategy="Normal", *means):
             average_reward.append(new_avg)
         else:
             average_reward.append(x)
-        bandit_means.append([b.mean for b in bandits])
 
-    return average_reward, bandit_means
+    return average_reward
+
 
 def test_results():
     iterations = 1000
-    epsilon = 0.1
     means = [1, 2, 5]
-    average_reward, bandit_means = run_game(iterations, epsilon, *means)
-
-    # # Plot bandit means
-    # N_b = len(means)
     x_range = range(iterations)
-    # bandit_means = list(zip(*bandit_means))
-    # for j in range(N_b):
-    #     plt.subplot(N_b, 1, j+1)
-    #     plt.plot(x_range, bandit_means[j])
-    #     plt.title("Bandit {}".format(j+1))
-    # plt.show()
 
     # Plot average reward
     for e in [0.2, 0.1, 0.01, 0.05]:
-        avg_reward, _ = run_game(iterations, e, "Normal", *means)
+        avg_reward= run_game(iterations, e, "Normal", *means)
         plt.plot(x_range, avg_reward, label=e)
     plt.legend()
     plt.title("Average reward for Normal strategy")
     plt.show()
 
-    for strategy in ["Optimistic", "Confidence"]:
-        avg_reward, _ = run_game(iterations, e, strategy, *means)
+    for strategy in ["Optimistic", "Confidence", "Bayesian"]:
+        avg_reward = run_game(iterations, e, strategy, *means)
         plt.plot(x_range, avg_reward, label=strategy)
     plt.legend()
-    plt.title("Average reward for Optimistic and Confidence strategies")
+    plt.title("Average reward for Optimistic, Confidence and Bayesian strategies")
     plt.show()
 
 
