@@ -80,6 +80,7 @@ def run_game(iterations, epsilon, strategy="Normal", *means):
         else:
             # random() generates a sample from (0, 1) continuous distribution, ie a random probability
             p = np.random.random()
+            if i > 0: epsilon = 1/i
             if p > epsilon:
                 # Exploit, get reward from currently best bandit
                 bandit = sorted(bandits, key=lambda k: k.mean)[-1]
@@ -117,6 +118,13 @@ def test_results():
         plt.plot(x_range, avg_reward, label=strategy)
     plt.legend()
     plt.title("Average reward for Optimistic, Confidence and Bayesian strategies")
+    plt.show()
+
+    for strategy in ["Normal", "Bayesian"]:
+        avg_reward = run_game(iterations, e, strategy, *means)
+        plt.plot(x_range, avg_reward, label=strategy)
+    plt.legend()
+    plt.title("Normal vs Bayesian")
     plt.show()
 
 
