@@ -1,6 +1,7 @@
 import numpy as np
 import logging
 
+
 class TicTacToe:
     def __init__(self, n):
         self.n = n
@@ -13,7 +14,7 @@ class TicTacToe:
 
     def get_state(self):
         # Represent state as a state vector, reshaping board into a vector
-        return self.board.reshape(self.n**2)
+        return str(self.board.reshape(self.n**2))
 
     def play(self, player, i, j):
         if 0 <= i < self.n and 0 <= j < self.n:
@@ -38,8 +39,6 @@ class TicTacToe:
         else:
             logging.error("The location ({}, {}) is outside of the board".format(i, j))
 
-
-
     def game_over(self):
         """
         Scan the board to check for a winner or see if its a draw.
@@ -55,31 +54,6 @@ class TicTacToe:
             return -1
         else:
             return 0
-        # for row in range(self.n):
-        #     row_sum = np.sum(self.board[row, :])
-        #     if row_sum == self.n*1:
-        #         return 1
-        #     elif row_sum == self.n*2:
-        #         return 2
-        #
-        # for col in range(self.n):
-        #     col_sum = np.sum(self.board[:, col])
-        #     if col_sum == self.n*1:
-        #         return 1
-        #     elif col_sum == self.n*2:
-        #         return 2
-        #
-        # diag_1, diag_2 = np.trace(self.board), np.trace(np.fliplr(self.board))
-        # if diag_1 == self.n*1 or diag_2 == self.n*1:
-        #     return 1
-        # elif diag_1 == self.n*2 or diag_2 == self.n*2:
-        #     return 2
-        #
-        # if self.current_round == self.n**2:
-        #     return -1
-        # else:
-        #     return 0
-
 
     def draw_board(self, player):
         """
@@ -91,13 +65,10 @@ class TicTacToe:
             if val == 0:
                 new_board = self.board.copy()
                 new_board[x, y] = player
-                possible_states.append((x, y, new_board.reshape(self.n**2)))
+                possible_states.append(((x, y), str(new_board.reshape(self.n**2))))
         return possible_states
 
-# arr = np.array([[1,0,2],[0,1,0],[2,0,1]])
-# print(arr[0][2])
-# for (x, y), val in np.ndenumerate(arr):
-#     print(x, y, val)
+
 
 game = TicTacToe(3)
 game.play(1, 0, 2)
