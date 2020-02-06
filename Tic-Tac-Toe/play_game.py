@@ -1,9 +1,9 @@
-import numpy as np
 
 
 def play_game(p1, p2, env, draw=False):
     # Loops until the game is over
     current_player = None
+    i = 0
     while not env.game_over():
         # Switch players in the new round
         # p1 always starts first
@@ -20,12 +20,14 @@ def play_game(p1, p2, env, draw=False):
                 env.draw_board()
 
         # Current player makes a move
-        current_player.take_action(env)
+        current_player.take_action(env, i)
 
         # Update state history
         state = env.get_state()
         p1.update_state_history(state)
         p2.update_state_history(state)
+
+        i += 1
 
     if draw:
         env.draw_board()

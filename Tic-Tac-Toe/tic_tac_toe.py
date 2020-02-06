@@ -58,7 +58,7 @@ class TicTacToe:
                 player_num = 2*player - 3
                 self.board[i, j] = player_num
 
-                print("Round number {} \n {} \n{} \n ".format(self.current_move, self.board, self.game_over()))
+                print("Round number {} \n {} \n{} \n ".format(self.current_move, self.draw_board(), self.game_over()))
             else:
                 logging.error("The chosen player move is illegal.")
         else:
@@ -77,11 +77,20 @@ class TicTacToe:
             if val == 0:
                 new_board = self.board.copy()
                 new_board[x, y] = player
-                possible_states.append(((x, y), str(new_board.reshape(self.n**2))))
+                possible_states.append(((x, y), new_board))
         return possible_states
 
     def draw_board(self):
-        pass
+        horizontal_lines = "-------------"
+        print(horizontal_lines)
+        for i in range(self.n):
+            row_string = "|"
+            for j in range(self.n):
+                val = self.board[i, j]
+                if val != 0: val = (val + 3)/2
+                row_string += " {} |".format(int(val))
+            print(row_string)
+            print(horizontal_lines)
 
 
 def test_tic_tac():
