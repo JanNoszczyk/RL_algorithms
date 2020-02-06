@@ -4,13 +4,13 @@ from tic_tac_toe import check_board
 
 
 class Player:
-    def __init__(self, n, player):
+    def __init__(self, n, player, alpha):
         self.n = n
         self.player = player
         self.player_num = 2 * player - 3
         self.value_function = {}
         self.state_history = []
-        self.alpha = 0.1
+        self.alpha = alpha
 
     @staticmethod
     def get_state_hash(state):

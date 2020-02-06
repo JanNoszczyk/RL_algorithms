@@ -58,14 +58,17 @@ class TicTacToe:
                 player_num = 2*player - 3
                 self.board[i, j] = player_num
 
-                print("Round number {} \n {} \n{} \n ".format(self.current_move, self.draw_board(), self.game_over()))
+                # print("Round number {} \n {} \n{} \n ".format(self.current_move, self.draw_board(), self.game_over()))
             else:
                 logging.error("The chosen player move is illegal.")
         else:
             logging.error("The location ({}, {}) is outside of the board".format(i, j))
 
-    def game_over(self):
+    def get_game_status(self):
         return check_board(self.board)
+
+    def game_over(self):
+        return self.get_game_status() in [1, 2, -1]
 
     def get_possible_states(self, player):
         """
@@ -104,4 +107,4 @@ def test_tic_tac():
     game.play(1, 1, 2)
     game.play(2, 0, 0)
     assert game.game_over() == 2
-test_tic_tac()
+# test_tic_tac()
