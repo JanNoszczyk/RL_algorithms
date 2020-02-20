@@ -2,6 +2,7 @@ import numpy as np
 from player import Player
 from tic_tac_toe import TicTacToe
 
+
 def play_game(p1, p2, env, i, draw=False):
     if i % 10 != 0: draw = False
     # Loops until the game is over
@@ -15,6 +16,7 @@ def play_game(p1, p2, env, i, draw=False):
         else:
             current_player = p1
 
+
         # Draw the board before the user who wants to see it makes a move
         if draw:
             if draw == 1 and current_player == p1:
@@ -26,7 +28,7 @@ def play_game(p1, p2, env, i, draw=False):
         current_player.take_action(env, i)
 
         # Update state history
-        state = env.get_state()
+        state = env.get_state().copy()
         p1.update_state_history(state)
         p2.update_state_history(state)
 
@@ -36,6 +38,7 @@ def play_game(p1, p2, env, i, draw=False):
     # Do the value function update
     p1.update(env)
     p2.update(env)
+
 
 def train():
     n = 3
@@ -52,4 +55,8 @@ def train():
             print("\nGame does not seem to have finished\n")
         else:
             print("\nPlayer {} won\n".format(end_state))
+
+    print(p1.value_function.values())
+    print("\n\n\n\n\n\n")
+    print(p2.value_function.values())
 train()

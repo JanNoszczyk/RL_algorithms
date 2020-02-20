@@ -33,7 +33,6 @@ class Player:
 
     def take_action(self, env, i):
         possible_states = env.get_possible_states(self.player)
-
         epsilon = 1 / i if i > 0 else 1
         p = np.random.random()
         if p > epsilon:
@@ -41,7 +40,7 @@ class Player:
             max_value, max_action = 0, None
             for action, state in possible_states:
                 cur_value = self.get_value(state)
-                if cur_value > max_value:
+                if cur_value >= max_value:
                     max_value = cur_value
                     max_action = action
         else:
@@ -51,7 +50,7 @@ class Player:
         if max_action:
             env.play(self.player, max_action[0], max_action[1])
         else:
-            logging.debug("No action was taken by player {}, the possible next states were {}".format(self.player, possible_states))
+            logging.error("No action was taken by player {}, the possible next states were {}".format(self.player, possible_states))
 
     def update(self, env):
         self.state_history.append(env.get_state())

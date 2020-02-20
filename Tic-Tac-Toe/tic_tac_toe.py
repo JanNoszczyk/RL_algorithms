@@ -60,7 +60,9 @@ class TicTacToe:
 
                 # print("Round number {} \n {} \n{} \n ".format(self.current_move, self.draw_board(), self.game_over()))
             else:
-                logging.error("The chosen player move is illegal.")
+                logging.error("The chosen player move is illegal.\n"
+                              "Player {}, Last Player {}, i {}, j {}, board {}, current_move {}".format(player, self.last_player, i, j,
+                                                                                       self.board, self.current_move))
         else:
             logging.error("The location ({}, {}) is outside of the board".format(i, j))
 
